@@ -574,7 +574,7 @@ sont public, inline ( = plusieurs instanciations autorisées dans plusieurs *tra
 
   * toutes les fonctions concernées ne sont générées que si elles sont utilisées.
   * constructeur par défaut généré uniquement si aucun constructeur déclaré
-  * destructeur généré automatiquement si pas déclaré (virtuel ssi dans classe fille avec un destructeur virtuel)
+  * destructeur généré automatiquement si pas déclaré (virtuel ssi dans classe fille avec un destructeur virtuel pour la classe de base)
   * `assignment operator` / `copy ctor` : chacun généré s'il n'est pas défini, et si aucune opération *move* opération n'est définie. Pourrait à l'avenir évoluer comme dans le cas des `move operator / ctor` : ne seront générés que si aucune opération par *move* ou *copy* n'est définie, et si le destructeur n'est pas défini.
   * `move assignment operator` / `move ctor` : sont générés tous les deux seulement si aucun des deux n'est défini, si aucune des deux opérations par copie n'est définie, et si le destructeur n'est pas défini.
 
@@ -624,7 +624,7 @@ L'élément pointé est détruit lorsque le compteur de référence atteint 0. `
 
 **L'accès à l'objet via un `shared_ptr` est aussi rapide que via un pointeur nu** dans les cas courants (sur la pile, membre d'un objet).
 
-Un `unique_tr` peut être converti en `shared_ptr`.
+Un `unique_ptr` peut être converti en `shared_ptr`.
 
 Un `shared_ptr<T> x` peut être converti implicitement en `share_ptr<U>` si `U` est une classe parente de `T`. La conversion peut être explicite  avec `static_pointer_cast<U>(x)`, qui est un équivalent pour les `shared_pointer` de `static_cast`. De même, pour les conversions d'une classe de base vers une classe dérivée, `dynamic_pointer_cast` est un équivalent pour les `shared_pointer` d'un `dynamic_cast`.
 
@@ -681,44 +681,6 @@ utile principalement pour construire des structures de cache.
 
 **Avant C++17**, `std::make_shared` (et `std::make_unique`) permettait de garantir l'absence de fuite mémoire dans un appel du type `f(std::make_shared(MyClass), g())`, au contraire de la syntaxe `f(std::shared_ptr<MyClass>(new MyClass), g())` : en effet dans le second cas, l'appel de `g()` pouvait théoriquement être entrelacé entre `new MyClass` et la construction du `shared_ptr`, ce qui pouvait conduire à une fuite mémoire en cas d'exception dans l'appel de `g()`. **C++17 garantit que cela n'arrive pas** : l'ordre d'évaluation des arguments n'est pas spécifié, mais chaque expression correspondant à un argument est complètement évaluée et liée à l'argument avant de passer à un autre argument. **Cet avantage de `std::make_shared` et de `std::make_unique` n'est donc plus valable à partir de C++17**.
 
-# Sujets secondaires
-
-## Idiome Pimpl et *smart pointers*
-
-Dans l'idiome Pimpl à la mode *smart pointers* l'implémentation est pointée par un `std::unique_ptr` depuis la classe principale `MyClass`, le type de l'implémentation étant incomplet dans le fichier `.h` (c'est l'intérêt de Pimpl). Avec un `unique_ptr`, la génération du destructeur par défaut de `MyClass` nécessite que le type de l'implémentation soit complet. Il faut donc instancier explicitement le destructeur de`MyClass` dans le `.cpp` où l'implémentation est définie.
-
-dans le `.h` : `MyClass::~MyClass();`
-dans le `.cpp`, après la définition de l'implémentation : `MyClass::~MyClass() = default;`
-
-La déclaration explicite du destructeur désactive la génération automatique des opérations *move*, qui doivent du coup être déclarées de la même façon. Si l'on veut aussi la copie, il faut la déclarer dans le `.h` et écrire explicitement dans le `.cpp` le code qui fait le *deep copy* de l'implémentation.
-
-Ces complications viennent du fait l'appel au *deleter* est fait statiquement depuis le destructeur du `std::unique_ptr`. Elles ne se présenteraient pas avec un `std::shared_ptr`, car l'appel est dans ce cas dynamique (A CLARIFIER).
-
-## Afficher un type : `Boost::typeinfo`
-
-Exemple :
-  ~~~
-  
-  #include <boost/type_index.hpp>
-  #include <iostream>
-
-  template<typename T> void f(const T& param)
-  {
-    using std::cout;
-    using boost::typeindex::type_id_with_cvr;
-
-    // show T
-    cout << "T =     "
-        << type_id_with_cvr<T>().pretty_name()
-        << '\n';
-
-    // show param's type
-    cout << "type of param = "
-        << type_id_with_cvr<decltype(param)>().pretty_name()
-        << '\n';
-  }
-
-  ~~~
 
 
 
