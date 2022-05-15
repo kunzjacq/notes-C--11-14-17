@@ -47,6 +47,11 @@
 - [RValues references explained, Thomas Becker](http://thbecker.net/articles/rvalue_references/section_01.html)
 - posts de blog divers (Herb Sutter / GotW, stackoverflow, etc.)
 
+pour faire des tests :
+
+- [compiler explorer](https://godbolt.org/) : permet de visualiser le code machine produit
+- [C++ Insights](https://cppinsights.io/) : permet de traduire certaines constructions avancées en code C++ plus simple
+
 ## Catégories de valeurs des expressions
 
 Références :
@@ -134,17 +139,17 @@ Lorsque 3 surcharges d'une même fonction ou classe existent, en `T`, `T&&` et `
 
 ## Déduction de type dans les templates
 
+Référence pour ce paragraphe : <https://en.cppreference.com/w/cpp/language/template_argument_deduction>
+
 Soit une fonction templatée
 
 `template <typename T1, typename T2, ...> f(ParamType param)`
 
-où `ParamType` dépend de `T1`, `T2`... (`const T1&`, `T1*`, `std::vector<T1>&`, `std::tuple<T1,T2>`...)
+où `ParamType` dépend de `T1`, `T2`... (exemples : `const T1&`, `T1*`, `std::vector<T1>&`, `std::tuple<T1,T2>`...)
 
 **Connaissant le type de `expr`, quel est le type déduit pour `ParamType`, et `T1`, `T2`... dans l'expression `f(expr)` ?**
 
-Référence pour ce paragraphe : https://en.cppreference.com/w/cpp/language/template_argument_deduction
-
-Sauf dans le cas où `ParamType` est une référence universelle (voir plus bas), le fait que le type de `expr` soit un type référence ou non ne joue aucun rôle. En effet, c'est `ParamType` qui détermine si un passage par valeur ou par référence va avoir lieu. 
+Sauf dans le cas où `ParamType` est une référence universelle (voir plus bas), le fait que le type de `expr` soit un type référence ou non ne joue aucun rôle. En effet, c'est `ParamType` qui détermine si un passage par valeur ou par référence va avoir lieu.
 
 Règles (simplifiées, voir la référence ci-dessus sur cppreference.com) :
 
@@ -170,7 +175,7 @@ On retrouve bien ce comportement en application des règles énoncées plus haut
 - Si `expr` est de type tableau `S[N]`, et `ParamType=T` n'est pas un type référence, `ParamType` est déduit comme un type pointeur et non comme un type tableau. En revanche, Si `ParamType=T&`, `ParamType` est déduit comme une référence sur un type tableau `S(&)[N]`, et `T=S[N]`. On peut d'ailleurs capturer la taille du tableau, par une déclaration du type `template<class T, std::size_t N> std::size_t f(T(&)[N])`.
 - De façon similaire, si `expr` est une fonction, une capture par valeur conduit à la déduction du type pointeur de fonction correspondant `return-type (*) args` ; une capture par référence conduit à la déduction de la référence sur le type de fonction correspondant `return-type (&) args`.
 
-Depuis C++17 il est possible de déduire automatiquement des types de classe templatée, pas seulement des types de fonctions templatées ; voir https://en.cppreference.com/w/cpp/language/class_template_argument_deduction.
+Depuis C++17 il est possible de déduire automatiquement des types de classe templatée, pas seulement des types de fonctions templatées ; voir <https://en.cppreference.com/w/cpp/language/class_template_argument_deduction>.
 
 ~~~C++
   std::pair p(2, 4.5);     // deduces to std::pair<int, double> p(2, 4.5);
@@ -209,6 +214,7 @@ Seule différence : quand elle est initialisée avec une `std::initializer_list<
 alors qu'appeler un template avec un tel argument n'est pas autorisé.
 
 En revanche, cela fonctionne
+
 - si le template demande explicitement un `initializer_list` :
 
 ~~~C++
@@ -223,11 +229,11 @@ En revanche, cela fonctionne
   f<std::initializer_list<int>>({0,2,3}); // OK
 ~~~
 
-Attention : Il ne faut pas confondre la syntaxe précédente avec `auto` avec les exemples d'*uniform initialization* ci-dessous. Voir [le paragraphe qui est consacré à cette syntaxe](#constructeurs-initializer_listt-universal-initialization)
+Attention : Il ne faut pas confondre la syntaxe précédente avec `auto` avec les exemples d'*uniform initialization* ci-dessous. Voir [le paragraphe consacré à cette syntaxe](#constructeurs-initializer_listt-universal-initialization)
 
 ~~~C++
   auto x{1}; // ici x est un int 
-  auto x{1,2}; // erreur de compilation, int n'a pas de constructeur à deux arguments
+  // auto x{1,2}; // erreur de compilation
 ~~~
 
 ## *Reference collapsing*
@@ -324,7 +330,7 @@ En pratique cependant, au lieu de l'implémentation ci-dessus, deux surcharges s
 
 - le passage d'une fonction ayant plusieurs surcharges à une fonction attendant un pointeur de fonction : l'appel à `std::forward` masque le type exact de pointeur attendu, et la bonne surcharge ne peut être sélectionnée ; solution : pré-convertir explicitement la fonction en le type de pointeur de fonction attendu ;
 - les *bit fields*, qui ne peuvent être liés à des références non `const` ; solution : les pré-convertir en entiers ;
-- le passage de 0 / NULL à une fonction attendant une adresse : la valeur sera interprété comme un entier, ce qui ne fonctionnera pas ; solution : utiliser `nullptr` ;
+- le passage de 0 / NULL à une fonction attendant une adresse : la valeur sera interprétée comme un entier, ce qui ne fonctionnera pas ; solution : utiliser `nullptr` ;
 - le passage d'un membre entier `static const` déclaré mais non défini (ce qui est licite tant que l'on ne prend pas de référence sur cet entier) : le passage par `std::forward` nécessite une prise de référence ce qui oblige à définir un stockage pour la valeur dans un fichier *.cpp* :
 
 ~~~C++
@@ -640,22 +646,23 @@ Les constructions autorisées pour les fonctions ou méthodes `constexpr` sont c
 
 ## Fonctions / constructeurs générés automatiquement
 
-sont public, inline ( = plusieurs instanciations autorisées dans plusieurs *translation units*), *nonvirtual* sauf cas particulier destructeur (voir ci-dessous).
+sont public, inline ( = plusieurs instanciations autorisées dans plusieurs *translation units*), *nonvirtual* sauf cas particulier du destructeur (voir ci-dessous).
 
 - toutes les fonctions concernées ne sont générées que si elles sont utilisées.
 - constructeur par défaut généré uniquement si aucun constructeur déclaré
 - destructeur généré automatiquement si pas déclaré (virtuel ssi dans classe fille avec un destructeur virtuel pour la classe de base)
-- `assignment operator` / `copy ctor` : chacun généré s'il n'est pas défini, et si aucune opération *move* opération n'est définie. Pourrait à l'avenir évoluer comme dans le cas des `move operator / ctor` : ne seront générés que si aucune opération par *move* ou *copy* n'est définie, et si le destructeur n'est pas défini.
-- `move assignment operator` / `move ctor` : sont générés tous les deux seulement si aucun des deux n'est défini, si aucune des deux opérations par copie n'est définie, et si le destructeur n'est pas défini.
+- `assignment operator` / `copy ctor` : chacun généré s'il n'est pas défini, et si aucune *move operation* n'est définie. Pourrait à l'avenir évoluer comme dans le cas des `move operator / ctor` : ne seront générés que si aucune opération par *move* ou *copy* n'est définie, et si le destructeur n'est pas défini.
+- `move assignment operator` / `move ctor` : sont générés tous les deux seulement si aucune *move / copy operation* n'est définie, *et* le destructeur n'est pas défini.
 
 Cas typiques :
 
 - classe sans héritage, où les fonctions par défaut conviennent : on peut ne rien écrire
-- classe avec héritage et donc destructeur virtuel où les fonctions par défaut conviennent : tout déclarer avec `=default` (et `virtual` pour le destructeur)
-- et le cas où l'on déclare les opérations manuellement (habituellement, les 4 opérations *copy* / *move* + destructeur)
-- le constructeur par défaut est généralement effacé (`=delete`)
+- classe avec héritage et donc destructeur virtuel où les fonctions par défaut conviennent : tout déclarer avec `=default` (et `virtual` pour le destructeur). En effet, la définition du destructeur (même `=default`) désactive la génération des *move operations* et à l'avenir désactivera la génération des *copy operations*.
+- cas où l'on déclare les opérations manuellement (habituellement, les 4 opérations *copy* / *move* + destructeur)
 
-Règle aux effets de bord bizarres : la présence d'un constructeur templaté ne désactive la génération automatique d'aucun constructeur, même si ce template peut être instancié en le constructeur par copie, par exemple.
+Le constructeur par défaut est généralement effacé (`=delete`).
+
+**Règle pouvant avoir des effets de bord inattendus** : la présence d'un constructeur templaté ne désactive la génération automatique d'aucun constructeur, même si ce template peut être instancié en le constructeur par copie, par exemple.
 
 ## `unique_ptr`
 
@@ -668,7 +675,7 @@ Règle aux effets de bord bizarres : la présence d'un constructeur templaté ne
   std::unique_ptr<Widget, decltype(loggingDel)> uptr(new Widget, loggingDel);
 ~~~
 
-Dans le cas d'un type tableau, `unique_ptr<T[]>` dispose d'un opérateur [] permettant d'accéder aux éléments du tableau.
+Dans le cas d'un type tableau, `unique_ptr<T[]>` dispose d'un opérateur `[]` permettant d'accéder aux éléments du tableau.
 
 Hors cas d'un *deleter* custom, un `unique_ptr` se résume en mémoire au pointeur sous-jacent.
 
