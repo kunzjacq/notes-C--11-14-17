@@ -1,8 +1,38 @@
----
-title: Notes C++11/14/17
-created: '2022-02-23T13:22:20.521Z'
-modified: '2022-05-14T21:07:02.208Z'
----
+- [Notes C++11/14/17](#notes-c111417)
+  - [Catégories de valeurs des expressions](#catégories-de-valeurs-des-expressions)
+    - [Exemples d'expressions *lvalue*](#exemples-dexpressions-lvalue)
+    - [Exemples d'expressions *rvalue*](#exemples-dexpressions-rvalue)
+    - [Catégorie de valeur et `decltype`](#catégorie-de-valeur-et-decltype)
+    - [Catégorie de valeur et surcharges de templates](#catégorie-de-valeur-et-surcharges-de-templates)
+  - [Déduction de type dans les templates](#déduction-de-type-dans-les-templates)
+    - [Références universelles](#références-universelles)
+    - [Cas particuliers](#cas-particuliers)
+  - [Règles de priorité pour le choix d'un template](#règles-de-priorité-pour-le-choix-dun-template)
+  - [Rapport entre déduction de types dans les templates et avec `auto`](#rapport-entre-déduction-de-types-dans-les-templates-et-avec-auto)
+  - [*Reference collapsing*](#reference-collapsing)
+  - [*rvalue references*, `std::move`, `std::forward`](#rvalue-references-stdmove-stdforward)
+    - [`std::move`](#stdmove)
+    - [`std::forward`](#stdforward)
+  - [Syntaxes alternatives pour le type de retour ou pour les paramètres dans les fonctions](#syntaxes-alternatives-pour-le-type-de-retour-ou-pour-les-paramètres-dans-les-fonctions)
+    - [`auto`](#auto)
+    - [*trailing return type*, `decltype(auto)`](#trailing-return-type-decltypeauto)
+  - [Avantages / désavantages d'`auto`](#avantages--désavantages-dauto)
+  - [Constructeurs, `initializer_list<T>`, `universal initialization`](#constructeurs-initializer_listt-universal-initialization)
+  - [`nullptr`, `NULL`, `0`](#nullptr-null-0)
+  - [`using a = b` vs `typedef b a`](#using-a--b-vs-typedef-b-a)
+  - [*type traits*](#type-traits)
+  - [`enums` délimités (`scoped enums`)](#enums-délimités-scoped-enums)
+  - [Usage de `=delete`](#usage-de-delete)
+  - [*reference qualifiers*](#reference-qualifiers)
+  - [`override`](#override)
+  - [*const_iterators*](#const_iterators)
+  - [`noexcept`, `noexcept(bool)`, `noexcept(expr)`](#noexcept-noexceptbool-noexceptexpr)
+  - [`constexpr`](#constexpr)
+  - [Fonctions / constructeurs générés automatiquement](#fonctions--constructeurs-générés-automatiquement)
+  - [`unique_ptr`](#unique_ptr)
+  - [`shared_ptr`](#shared_ptr)
+  - [`weak_ptr`](#weak_ptr)
+  - [`std::make_unique`, `std::make_shared`](#stdmake_unique-stdmake_shared)
 
 # Notes C++11/14/17
 
@@ -65,8 +95,7 @@ Une variable de type *rvalue reference* ne définit *pas* une expression *rvalue
   
 l'expression `x` est une *lvalue*.
 
-
-## Catégorie de valeur et `decltype`
+### Catégorie de valeur et `decltype`
 
 Voir [https://en.cppreference.com/w/cpp/language/decltype](https://en.cppreference.com/w/cpp/language/decltype).
 
@@ -79,7 +108,7 @@ Le type d'une expression `e` peut être obtenu par `decltype((e))`, tandis que l
 
 En conséquence, pour une variable `x`, `decltype(x)` et `decltype((x))` diffèrent en général.
 
-## Catégorie de valeur et surcharges de templates
+### Catégorie de valeur et surcharges de templates
 
 La catégorie de valeur d'une expression est associée aux types auxquel elle peut être liée dans un fonction ou une classe templatée :
 
@@ -109,9 +138,9 @@ Référence pour ce paragraphe : https://en.cppreference.com/w/cpp/language/temp
 
 Sauf dans le cas où `ParamType` est une référence universelle (voir plus bas), le fait que le type de `expr` soit un type référence ou non ne joue aucun rôle. En effet, c'est `ParamType` qui détermine si un passage par valeur ou par référence va avoir lieu. 
 
-Règles (simplifiées, voir cppreference.com) :
+Règles (simplifiées, voir la référence ci-dessus sur cppreference.com) :
 
-  * Si `ParamType` n'est pas un type référence, le passage est par valeur, et les attributs *const* et *volatile* éventuels de `decltype(expr)` sont ignorés puisqu'ils ne s'appliquent pas à la copie ; `T1`, `T2`... sont choisis de sorte que le type de `ParamType` soit identique au type `remove_cv_t<remove_reference_t<decltype(expr)>>`.
+  * Si `ParamType` n'est pas un type référence, le passage est par valeur, et les attributs *const* et *volatile* éventuels de `decltype(expr)` sont ignorés puisqu'ils ne s'appliquent pas à la copie ; `T1`, `T2`... sont choisis de sorte que le type de `ParamType` soit identique au type `remove_cv_t<remove_reference_t<decltype(expr)>>`. (voir [Type traits](#type-traits))
   * Si `ParamType` est un référence qui n'est pas une référence universelle, le passage est par référence, `T1`, `T2`... sont choisis de sorte que le type de `remove_reference_t<ParamType>` soit identique à `remove_reference_t<decltype(expr)>`. 
   * Si `ParamType` est une référence universelle,
     * si `expr` est une *lvalue*, `remove_reference_t<ParamType>` est mis en correspondance avec `decltype(expr)&` ;
@@ -284,6 +313,8 @@ En pratique cependant, au lieu de l'implémentation ci-dessus, deux surcharges s
 
 ## Syntaxes alternatives pour le type de retour ou pour les paramètres dans les fonctions
 
+### `auto`
+
 A partir de C++14, `auto` peut être utilisé 
   * comme type de retour pour une fonction
   * comme type pour le paramètre d'une fonction lambda. La déduction se comporte alors comme dans le cas des templates (en particulier, les `std::initializer_list` sont interdits).
@@ -298,10 +329,12 @@ A partir de C++14, `auto` peut être utilisé
 
   ~~~
 
-Comme `auto` utilisé comme type de retour applique les règles de déduction de types des templates, il ne permet pas de retourner une référence, puisque le type référence d'une expression est ignoré lors de la déduction de type d'un template. 
+Comme `auto` utilisé comme type de retour applique les règles de déduction de types des templates, il ne permet pas de retourner une référence, puisque le type référence d'une expression est ignoré lors de la déduction de type d'un template.
+
+### *trailing return type*, `decltype(auto)`
 
 Deux autres syntaxes existent pour le type de retour :
-  * `trailing return type` (C++11) : type de retour indiqué manuellement, mais pouvant utiliser les types des arguments. Exemple : `template<class T, class I> auto f(T& v, I i) -> decltype(v[i])`. Le type de l'expression est pris tel quel, donc une référence n'est *pas* ignorée dans ce cas.
+  * *trailing return type* (C++11) : type de retour indiqué manuellement, mais pouvant utiliser les types des arguments. Exemple : `template<class T, class I> auto f(T& v, I i) -> decltype(v[i])`. Le type de l'expression est pris tel quel, donc une référence n'est *pas* ignorée dans ce cas.
   * `decltype(auto)` (C++14) au lieu de `auto`, sans *trailing return type* : similaire à `auto`, mais là aussi, c'est le type de l'expression de retour qui est pris en compte, sans modification.
 
 `decltype(auto)` peut également être utilisé pour la déclaration d'une variable, avec les mêmes conséquences.
@@ -388,7 +421,7 @@ La syntaxe avec accolades est appelée `uniform initialization` (UI) ou `brace i
   }
   ~~~
 
-## `nullptr`, `NULL`, 0
+## `nullptr`, `NULL`, `0`
 `nullptr` est typé comme un type pointeur générique, peut se convertir en tout type pointeur. 0 ou NULL peut être vu comme un entier et déclencher, par exemple, une mauvaise déduction de type de template ou un mauvaux choix de surcharge.
 
 ## `using a = b` vs `typedef b a`
@@ -434,7 +467,9 @@ en effet, `MyAllocList<T>::type` pourrait être un membre et non pas un type pou
   ~~~
 qui est nettement plus simple.
 
-Exemples de *type traits* utilisant l'ancienne et la nouvelle syntaxe (header `type_traits`) :
+## *type traits*
+
+Le header `type_traits` permet de convertir type ou d'extraire des propriétés de types manipulés. Il est utilisable avec les deux syntaxes indiquées au paragraphe précédent à partir de C++14, par exemple :
 
   ~~~
   std::remove_const<T>::type           // C++11 : const T → T.
@@ -476,7 +511,7 @@ Le type de stockage par défaut est `int`, peut être changé. Exemple : `enum c
 
 ## Usage de `=delete`
 
-`delete` peut être utilisé pour interdire l'accès à des constructeurs, mais aussi à des surcharges de fonctions afin par exemple d'empêcher des conversions indésirables. Une fonction comme `bool f(int x);` peut être appelée avec un entier, mais aussi un `bool`, un `double`... Pour interdire des conversions :
+`=delete` peut être utilisé pour interdire l'accès à des constructeurs, mais aussi à des surcharges de fonctions afin par exemple d'empêcher des conversions indésirables. Une fonction comme `bool f(int x);` peut être appelée avec un entier, mais aussi un `bool`, un `double`... Pour interdire des conversions :
 
   ~~~
   bool f(bool) = delete;
@@ -490,7 +525,7 @@ de même avec des fonctions templatées :
   template<> void f<char>(char*) = delete;
   template<> void f<const char>(const char*) = delete;
   ~~~
-  en revanche, il y a d'autres fonctions à interdire avec `delete` si l'on veut être exhaustif : `volatile char*`, `const volative char*`, soit toutes les combinaisons des qualificateurs cv.
+  en revanche, il y a d'autres fonctions à interdire avec `delete` si l'on veut être exhaustif : `volatile char*`, `const volative char*`, soit toutes les combinaisons des qualificateurs *cv*.
 
   Cette syntaxe fonctionne également pour interdire une spécialisation d'une méthode templatée dans une classe :
 
@@ -540,7 +575,7 @@ Exemple :
 
 ## *const_iterators*
 
-à utiliser quand on ne veut pas modifier les données pointées. peuvent être obtenus par `cbegin()`, `cend()` (méthode du container, n'existe pas toujours, ou fonction non-membre dans `std`, toujours applicable) (C++11, C++14 pour les cas non-membre, comme les arrays), ou par `begin()` et `end()` sur un conteneur `const`.
+à utiliser quand on ne veut pas modifier les données pointées. peuvent être obtenus par `cbegin()`, `cend()` (méthode du container, n'existe pas toujours, ou fonction non-membre dans `std`, toujours applicable) (C++11, C++14 pour les cas non-membre, comme les arrays), ou par `begin()` et `end()` sur un conteneur `const` à partir de C++14.
 
 ## `noexcept`, `noexcept(bool)`, `noexcept(expr)`
 
@@ -650,7 +685,7 @@ Il existe une classe dont on peut faire dériver un objet pour essentiellement l
 
 ## `weak_ptr`
 
-Un `weak_ptr` est construit à partir d'un `share_ptr`, mais n'incrémente pas le *reference count* de l'objet pointé. Il peut pointer sur un objet qui a été détruit.
+Un `weak_ptr` est construit à partir d'un `shared_ptr`, mais n'incrémente pas le *reference count* de l'objet pointé. Il peut pointer sur un objet qui a été détruit.
 
 Création : `std::weak_ptr<T> wptr(sptr)`
 
@@ -658,7 +693,7 @@ Teste si l'objet pointé a été détruit : `wptr.expired()`
 
 Mais cette information a une durée de vie nulle en contexte multithread.
 
-atomiquement tester l'existence de l'objet pointé et créer un `shared_ptr` à partir d'un `weak_ptr` :
+Tester atomiquement l'existence de l'objet pointé et créer un `shared_ptr` à partir d'un `weak_ptr` :
 
   ~~~
   std::shared_ptr<T> sptr(wptr);    // if wptr is expired, throw std::bad_weak_ptr
@@ -671,7 +706,7 @@ Autre construction qui n'utilise pas les exceptions :
   auto sptr = wpw.lock();                 // same as above, but uses auto
   ~~~
 
-utile principalement pour construire des structures de cache.
+ `weak_ptr` est principalement utile pour construire des structures de cache.
 
 ## `std::make_unique`, `std::make_shared`
 
