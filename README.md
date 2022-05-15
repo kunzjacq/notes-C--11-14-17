@@ -1,4 +1,4 @@
-- [Notes C++11/14/17](#notes-c111417)
+﻿- [Notes C++11/14/17](#notes-c111417)
   - [Catégories de valeurs des expressions](#catégories-de-valeurs-des-expressions)
     - [Exemples d'expressions *lvalue*](#exemples-dexpressions-lvalue)
     - [Exemples d'expressions *rvalue*](#exemples-dexpressions-rvalue)
