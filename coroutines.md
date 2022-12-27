@@ -246,7 +246,7 @@ struct generator_promise_type
 };
 ~~~
 
-The classe *generator* (qui est le type de retour de la coroutine) est définie comme suit :
+La classe *generator* (qui est le type de retour de la coroutine) est définie comme suit :
 
 ~~~C++
 template<class T> struct generator_promise_type;
