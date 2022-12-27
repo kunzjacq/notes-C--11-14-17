@@ -30,7 +30,7 @@
   - [Usage de `=delete`](#usage-de-delete)
   - [*reference qualifiers*](#reference-qualifiers)
   - [`override`](#override)
-  - [*const_iterators*](#const_iterators)
+  - [*const\_iterators*](#const_iterators)
   - [`noexcept`, `noexcept(bool)`, `noexcept(expr)`](#noexcept-noexceptbool-noexceptexpr)
   - [`constexpr`](#constexpr)
   - [Fonctions / constructeurs générés automatiquement](#fonctions--constructeurs-générés-automatiquement)
@@ -62,7 +62,7 @@ Références :
 Une expression possède à la fois un *type* et une *catégorie de valeur*. Cette catégorie dépend de deux propriétés de l'expression :
 
 - définit-elle une entité avec un emplacement mémoire bien défini indépendamment de son usage ? A l'opposé, l'entité représentée peut-elle être créée en place là où elle va être utilisée, comme dans le cas d'un entier littéral ?
-- peut-elle être *déplacée*, c'est à dire réutilisée dans une autre variable, et détruite au passage ? 
+- peut-elle être *déplacée*, c'est à dire réutilisée dans une autre variable, et détruite au passage ?
 
  Une valeur qui n'a pas d'emplacement mémoire bien défini peut être déplacée (en fait directement formée en place, mais cela revient au même), donc la combinaison d'attributs "ne possède pas d'emplacement mémoire bien défini" et "ne peut pas être déplacée" n'existe pas. En conséquence, il y a 3 catégories de valeur sur la base de ces deux critères :
 
@@ -73,7 +73,7 @@ Une expression possède à la fois un *type* et une *catégorie de valeur*. Cett
  | **oui**              |                         | `prvalue` | `xvalue` | `rvalue` |
  |                      |                         |           | `glvalue`|          |
 
-Une expression est donc une *rvalue* ou une *lvalue* (elle peut être déplacée ou non), et également une une *glvalue* ou une *prvalue* (elle définit une entité preexistante en mémoire ou non). Une *glvalue* nécessitera un *move* un *copy* pour être utilisée (dans une affectation, un appel de fonction avec passage par valeur), alors qu'une *prvalue* sera construite en place sans *copy* ni *move* (*guaranteed copy elision*, depuis C++17, qui standardise une comportement qu'avaient déjà les compilateurs en pratique mais qui n'était pas garanti).
+Une expression est donc une *rvalue* ou une *lvalue* (elle peut être déplacée ou non), et également une une *glvalue* ou une *prvalue* (elle définit une entité preexistante en mémoire ou non). Une *glvalue* nécessitera un *move* ou un *copy* pour être utilisée (dans une affectation, un appel de fonction avec passage par valeur), alors qu'une *prvalue* sera construite en place sans *copy* ni *move* (*guaranteed copy elision*, depuis C++17, qui standardise une comportement qu'avaient déjà les compilateurs en pratique mais qui n'était pas garanti).
 
 Une expression *lvalue* n'est pas, en général, une expression dans laquelle on peut écrire quelque chose. Elle peut en effet être `const`, désigner une fonction...
 
@@ -104,14 +104,14 @@ Une variable de type *rvalue reference* ne définit *pas* une expression *rvalue
 ~~~C++
   int && x = 2;
 ~~~
-  
+
 l'expression `x` est une *lvalue*.
 
 ### Catégorie de valeur et `decltype`
 
 Voir [https://en.cppreference.com/w/cpp/language/decltype](https://en.cppreference.com/w/cpp/language/decltype).
 
-Le type d'une expression `e` peut être obtenu par `decltype((e))`, tandis que le type d'une variable `x` peut être obtenu par `decltype(x)`. Dans le cas d'une expression, `&` et `&&` n'ont pas de signification relative aux références dans le retour de `decltype`: 
+Le type d'une expression `e` peut être obtenu par `decltype((e))`, tandis que le type d'une variable `x` peut être obtenu par `decltype(x)`. Dans le cas d'une expression, `&` et `&&` n'ont pas de signification relative aux références dans le retour de `decltype`:
 
 **Dans le cas d'une expression, le type renvoyé par `decltype` est relié à la catégorie de valeur de l'expression en argument :**
 
@@ -190,7 +190,7 @@ Les bases de l'algorithme sont simples :
 - filtrer les templates (ou fonctions non template) applicables, et produire une erreur si l'ensemble est vide ;
 - les classer selon un ordre partiel, avec déclenchement d'erreur s'il y a plus d'un meilleur élément (ambiguité du meilleur template). L'ordre est un ordre lexicographique issu de plusieurs critères de priorité décroissante définissant chacun un ordre partiel : si le premier critère définit un ordre strict entre deux éléments, ces éléments sont ordonnés suivant cette relation, sinon on passe au second critère, etc.
 
-Pour une discussion plus approfondie, voir 
+Pour une discussion plus approfondie, voir
 
 - <https://stackoverflow.com/questions/31047860/c-template-functions-priority>
 - <https://stackoverflow.com/questions/17005985/what-is-the-partial-ordering-procedure-in-template-deduction>
@@ -222,7 +222,7 @@ En revanche, cela fonctionne
   f({0,2,3}); // OK
 ~~~
 
-- ou si le type du paramètre de template est explicité au moment de l'appel : 
+- ou si le type du paramètre de template est explicité au moment de l'appel :
 
 ~~~C++
   template<class T> f(T&& x);
@@ -232,7 +232,7 @@ En revanche, cela fonctionne
 Attention : Il ne faut pas confondre la syntaxe précédente avec `auto` avec les exemples d'*uniform initialization* ci-dessous. Voir [le paragraphe consacré à cette syntaxe](#constructeurs-initializer_listt-universal-initialization)
 
 ~~~C++
-  auto x{1}; // ici x est un int 
+  auto x{1}; // ici x est un int
   // auto x{1,2}; // erreur de compilation
 ~~~
 
@@ -273,7 +273,7 @@ L'utilisation de `remove_reference_t<T>` est là pour garantir la conversion *in
 ### `std::forward`
 
 `std::forward` est fait pour transmettre une *universal reference* à une sous-fonction. Dans ce contexte, `std::forward` convertit conditionnellement son argument qui est une *lvalue* en *rvalue reference*.
- 
+
 ~~~C++
   // sans std::forward
   template <class T> void f(T&& x){
@@ -303,7 +303,7 @@ Ces deux cas normaux sont les suivants : avec `S` type non référence, et `v` d
 - `T = S&` (cas *lvalue*) : `forward<S&> (v)` est `static_cast<S&>  (v)`.
 
 Comme on peut le vérifier dans ces deux cas, ce sont les règles de *reference collapsing* qui asssurent le bon fonctionnement de `std::forward`.
-  
+
 En pratique cependant, au lieu de l'implémentation ci-dessus, deux surcharges sont présentes :
 
 ~~~C++
@@ -339,7 +339,7 @@ En pratique cependant, au lieu de l'implémentation ci-dessus, deux surcharges s
     static const int y = 2; // déclaration
   };
   // dans un .cpp incluant le .h ci-dessus
-  const int x::y; // définition 
+  const int x::y; // définition
 ~~~
 
 ## Syntaxes alternatives pour le type de retour ou pour les paramètres dans les fonctions
@@ -356,7 +356,7 @@ A partir de C++14, `auto` peut être utilisé
 ~~~C++
   auto compare =
     [] (const auto& p1, const auto& p2)
-    { return *p1 < *p2; }; 
+    { return *p1 < *p2; };
 ~~~
 
 Comme `auto` utilisé comme type de retour applique les règles de déduction de types des templates, il ne permet pas de retourner une référence, puisque le type référence d'une expression est ignoré lors de la déduction de type d'un template.
@@ -399,7 +399,7 @@ Inconvénients :
 
 ~~~C++
   std::vector<bool> f();
-  auto v = f()[0]; // renvoie un std::vector<bool>::reference qui fait référence au résultat de f(), temporaire 
+  auto v = f()[0]; // renvoie un std::vector<bool>::reference qui fait référence au résultat de f(), temporaire
   // => l'utilisation de v déclenchera un comportement indéfini
 ~~~
 
@@ -423,7 +423,7 @@ ou, de façon équivalente,
 Cette syntaxe permet
 
 - soit d'appeler un constructeur prenant des arguments individuels correspondant aux valeurs listées
-- soit d'appeler un constructure prenant en argument un `std::initializer_list<T>`, ce qui est très utile pour initialiser un container (e.g. `std::vector<T>`) avec un nombre variable de valeurs. 
+- soit d'appeler un constructure prenant en argument un `std::initializer_list<T>`, ce qui est très utile pour initialiser un container (e.g. `std::vector<T>`) avec un nombre variable de valeurs.
 
 La syntaxe avec accolades est appelée `uniform initialization` (UI) ou `brace initialization`.
 
@@ -446,7 +446,7 @@ La syntaxe avec accolades est appelée `uniform initialization` (UI) ou `brace i
 
 ~~~C++
   #include <vector>
-  
+
   template<class ... Ts> auto f(Ts ...args)
   {
     return std::vector(args...); //(*)
@@ -470,9 +470,9 @@ La syntaxe avec accolades est appelée `uniform initialization` (UI) ou `brace i
 
 ~~~C++
   typedef void (*FP)(int);      // typedef sur un pointeur de fonction
-  using FP = void (*)(int);     
+  using FP = void (*)(int);
 
-  typedef int (*A)[10]; 
+  typedef int (*A)[10];
   using A = int (*)[10];
 ~~~
 
@@ -488,22 +488,22 @@ L'équivalent avec `typedef` consiste à créer un typedef dans une `class` ou u
   template<typename T>
   struct MyAllocList {
     typedef std::list<T, MyAlloc<T>> type; // MyAllocList<T>::type est synonyme de std::list<T, MyAlloc<T>>
-  };               
+  };
 ~~~
 
 on a le `::type` en plus, mais surtout, dans le cas du `typedef`, l'usage dans une classe templatée nécessite de préciser que l'on a affaire à un type avec `typename`, car le compilateur n'est pas en mesure de s'en assurer :
 ~~~C++
   template<typename T>
   class Widget {
-    typename MyAllocList<T>::type list;  
+    typename MyAllocList<T>::type list;
   };
 ~~~
-en effet, `MyAllocList<T>::type` pourrait être un membre et non pas un type pour certaines spécialisations de `MyAllocList<T>`, inconnues au moment où le code ci-dessus est rencontré. `MyAllocList<T>::type` est appelé un `dependent type`. Il n'y a pas le même problème avec `MyAllocListU<T>` qui ne peut être qu'un type, et l'on peut donc écrire 
+en effet, `MyAllocList<T>::type` pourrait être un membre et non pas un type pour certaines spécialisations de `MyAllocList<T>`, inconnues au moment où le code ci-dessus est rencontré. `MyAllocList<T>::type` est appelé un `dependent type`. Il n'y a pas le même problème avec `MyAllocListU<T>` qui ne peut être qu'un type, et l'on peut donc écrire
 
 ~~~C++
   template<typename T>
   class Widget {
-    MyAllocListU<T> list;  
+    MyAllocListU<T> list;
   };
 ~~~
 qui est nettement plus simple.
@@ -541,7 +541,7 @@ Nouvelle syntaxe avec *enums* délimités :
   enum class couleur {bleu = 1, rouge, noir};
 
   auto x = couleur::bleu; // type = couleur
-  
+
   //int x_int = x; // Erreur, conversion implicite interdite
   int x_int = static_cast<int>(x); // ok
 ~~~
@@ -629,7 +629,7 @@ On peut déclarer une fonction conditionnellement `noexcept`, si une autre fonct
 
 ~~~C++
   template <class T, size_t N>
-  void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b))); 
+  void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));
 ~~~
 
 La syntaxe générale est `noexcept(bool)`. `noexcept(expr)` est un booléen qui vaut 1 si l'évaluation de `expr` est déclarée comme ne produisant pas d'exception.
@@ -717,7 +717,7 @@ Il existe une classe dont on peut faire dériver un objet pour essentiellement l
   void process(){
      processed.emplace_back(shared_from_this());
   }
-  
+
   private:
     // ctors
   };
