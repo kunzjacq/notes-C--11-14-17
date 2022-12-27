@@ -2,7 +2,7 @@
 
 ## References
 
-- [1] [Lewis Baker introduction to coroutines](https://lewissbaker.github.io/) : slightly out-of-date, but very clear and complete on the coroutine TS written beween 2017 and 2020. Lewis Baker is the author of the library [*cppcoro*](https://github.com/lewissbaker/cppcoro).
+- [1] [Lewis Baker introduction to coroutines](https://lewissbaker.github.io/) : slightly out-of-date, but very clear and complete on the coroutine TS. Lewis Baker is the author of the library [*cppcoro*](https://github.com/lewissbaker/cppcoro).
   - [1.1] [Coroutine theory](https://lewissbaker.github.io/2017/09/25/coroutine-theory)
   - [1.2] [C++ Coroutines: Understanding operator `co_await`](https://lewissbaker.github.io/2017/11/17/understanding-operator-co-await)
   - [1.3] [C++ Coroutines: Understanding the promise type](https://lewissbaker.github.io/2018/09/05/understanding-the-promise-type)
@@ -41,11 +41,8 @@ It may be surprising that, in the coroutine syntax, a coroutine does not explici
 ### In short
 
 - return type of coroutine = return object ≠ promise object
-
 - coroutine handle ≈ pointer to coroutine state
-
 - promise object ⊂ coroutine state
-
 - type of promise object defined in type of return object, as a subtype `promise_type` of this object.
 
 ## Coroutine handle, coroutine state, promise object, return object
@@ -92,7 +89,6 @@ From [5] :
 ## Methods in the promise type
 
 ~~~C++
-
 struct return_object
 {
   struct promise_type
@@ -216,10 +212,10 @@ To derive the awaiter `b` from `co_await <expr>`, first, an awaitable object is 
  `awaitable a` is obtained as `promise.await_transform(<expr>)`
 otherwise
  `awaitable a = evaluation of <expr>`
-- then, if `awaitable a` has an `operator co_await()`, the awaiter `b` is obtained as `a.co_await()`.
+- then, if `awaitable a` has an operator `co_await()`, the awaiter `b` is obtained as `a.co_await()`.
 otherwise,  the awaiter `b` is `a`.
 
-> See awaiter `GetPromise` of [1] for an example of an awaiter that does not suspend the coroutine (`await_ready` returns false, but `await_suspend` also returns false), and is instead used to enable the coroutine to access its own promise object: `await_suspend` stores the coroutine handle in the awaiter, and `await_resume` converts this into a pointer to the promise object, which it returns. This is used to store a value from the coroutine in the promise, which can then be accessed from the code that started the coroutine through the return object provided it has a copy of the coroutine handle as discussed previously. This technique is however unnecessary as the resulting code roughtly emulates what is done by `co_yield`.
+> See awaiter `GetPromise` of [1] for an example of an awaiter that does not suspend the coroutine (`await_ready` returns `false`, but `await_suspend` also returns `false`), and is used to enable the coroutine to access its own promise object: `await_suspend` stores the coroutine handle in the awaiter, and `await_resume` converts this into a pointer to the promise object, which it returns. This is used to store a value from the coroutine in the promise, which can then be accessed from the code that started the coroutine through the return object provided it has a copy of the coroutine handle as discussed previously. This technique is however unnecessary as the resulting mechanism roughtly emulates what is done by `co_yield`.
 
 ## Generator example
 
@@ -314,6 +310,6 @@ generator<unsigned> counter()
 void main()
 {
   auto gen = counter();
-  while (gen) std::cout << "counter: " << gen() << std::endl;
+  while(gen) std::cout << "counter: " << gen() << std::endl;
 }
 ~~~
